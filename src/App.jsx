@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './styles/App.css';
 
 const App = () => {
@@ -6,19 +6,26 @@ const App = () => {
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("EUR");
   const [result, setResult] = useState(null);
+  const [currencies, setCurrencies] = useState([]);
+  const [rates, setRates] = useState({});
 
-  const currencies = [
-    { code: "USD", name: "United States Dollar" },
-    { code: "EUR", name: "Euro" },
-    { code: "GBP", name: "British Pound" },
-    { code: "AUD", name: "Australian Dollar" },
-    { code: "CAD", name: "Canadian Dollar" },
-    { code: "CHF", name: "Swiss Franc" },
-    { code: "JPY", name: "Japanese Yen" },
-    { code: "INR", name: "Indian Rupee" },
-    { code: "CNY", name: "Chinese Yuan" },
-    { code: "MXN", name: "Mexican Peso" }
-  ];
+  // Fetch all currencies and rates on component mount
+  useEffect(() => {
+    // Example: Use your own API key here
+    const apiKey = "YOUR_API_KEY";
+    const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`;
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === "success") {
+          const currencyList = Object.keys(data.conversion_rates);
+          setCurrencies(currencyList);  // Set all available currencies
+          setRates(data.conversion_rates);  // Set conversion rates for all currencies
+        }
+      })
+      .catch(error => console.error("Error fetching exchange rates:", error));
+  }, []);
 
   const handleAmountChange = (e) => {
     setAmount(e.target.value);
@@ -31,17 +38,17 @@ const App = () => {
   };
 
   const handleConvert = () => {
-    const apiKey = 'YOUR_API_KEY';  // Use your API key here
-    const url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
+    // Ensure amount is a valid number
+    if (amount <= 0) return;
 
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const exchangeRate = data.rates[toCurrency];
-        const convertedAmount = (amount * exchangeRate).toFixed(2);
-        setResult(convertedAmount);
-      })
-      .catch(error => console.error("Error fetching exchange rates:", error));
+    const fromRate = rates[fromCurrency];
+    const toRate = rates[toCurrency];
+
+    // Calculate the converted amount
+    if (fromRate && toRate) {
+      const convertedAmount = (amount * toRate) / fromRate;
+      setResult(convertedAmount.toFixed(2));
+    }
   };
 
   return (
@@ -59,8 +66,8 @@ const App = () => {
         onChange={handleCurrencyChange}
       >
         {currencies.map(currency => (
-          <option key={currency.code} value={currency.code}>
-            {currency.name}
+          <option key={currency} value={currency}>
+            {currency}
           </option>
         ))}
       </select>
@@ -70,13 +77,17 @@ const App = () => {
         onChange={handleCurrencyChange}
       >
         {currencies.map(currency => (
-          <option key={currency.code} value={currency.code}>
-            {currency.name}
+          <option key={currency} value={currency}>
+            {currency}
           </option>
         ))}
       </select>
       <button onClick={handleConvert}>Convert</button>
-      {result && <div className="result">Converted Amount: {result} {toCurrency}</div>}
+      {result && (
+        <div className="result">
+          {amount} {fromCurrency} = {result} {toCurrency}
+        </div>
+      )}
     </div>
   );
 };
