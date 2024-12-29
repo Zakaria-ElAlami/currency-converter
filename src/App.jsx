@@ -8,15 +8,15 @@ const App = () => {
   const [result, setResult] = useState(null);
   const [currencies, setCurrencies] = useState([]);
 
-  // Fetch available currencies and rates
+  // Fetch all available currencies
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        const response = await fetch("https://api.exchangerate.host/latest");
+        const response = await fetch("https://api.exchangerate.host/symbols");
         const data = await response.json();
-        setCurrencies(Object.keys(data.rates));
+        setCurrencies(Object.keys(data.symbols));
       } catch (error) {
-        console.error("Error fetching currency data:", error);
+        console.error("Error fetching currencies:", error);
       }
     };
 
