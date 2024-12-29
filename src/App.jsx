@@ -1,89 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import './styles/App.css';
 
-function App() {
-  const [amount, setAmount] = useState(1);
-  const [fromCurrency, setFromCurrency] = useState('USD');
-  const [toCurrency, setToCurrency] = useState('EUR');
-  const [exchangeRate, setExchangeRate] = useState(null);
-  const [currencies, setCurrencies] = useState([]);
-  const [convertedAmount, setConvertedAmount] = useState(null);
+const App = () => {
+  const [amount, setAmount] = useState(0);
+  const [fromCurrency, setFromCurrency] = useState("USD");
+  const [toCurrency, setToCurrency] = useState("EUR");
+  const [result, setResult] = useState(null);
 
-  const API_URL = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
+  const currencies = [
+    { code: "USD", name: "United States Dollar" },
+    { code: "EUR", name: "Euro" },
+    { code: "GBP", name: "British Pound" },
+    { code: "AUD", name: "Australian Dollar" },
+    { code: "CAD", name: "Canadian Dollar" },
+    { code: "CHF", name: "Swiss Franc" },
+    { code: "JPY", name: "Japanese Yen" },
+    { code: "INR", name: "Indian Rupee" },
+    { code: "CNY", name: "Chinese Yuan" },
+    { code: "MXN", name: "Mexican Peso" }
+  ];
 
-  useEffect(() => {
-    axios.get(API_URL)
-      .then(response => {
-        setCurrencies(Object.keys(response.data.rates));
-        setExchangeRate(response.data.rates[toCurrency]);
+  const handleAmountChange = (e) => {
+    setAmount(e.target.value);
+  };
+
+  const handleCurrencyChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "fromCurrency") setFromCurrency(value);
+    if (name === "toCurrency") setToCurrency(value);
+  };
+
+  const handleConvert = () => {
+    const apiKey = 'YOUR_API_KEY';  // Use your API key here
+    const url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const exchangeRate = data.rates[toCurrency];
+        const convertedAmount = (amount * exchangeRate).toFixed(2);
+        setResult(convertedAmount);
       })
-      .catch(error => console.error(error));
-  }, [fromCurrency, toCurrency]);
-
-  useEffect(() => {
-    if (exchangeRate) {
-      setConvertedAmount(amount * exchangeRate);
-    }
-  }, [amount, exchangeRate]);
-
-  const handleAmountChange = (event) => {
-    setAmount(event.target.value);
-  };
-
-  const handleFromCurrencyChange = (event) => {
-    setFromCurrency(event.target.value);
-  };
-
-  const handleToCurrencyChange = (event) => {
-    setToCurrency(event.target.value);
+      .catch(error => console.error("Error fetching exchange rates:", error));
   };
 
   return (
-    <div className="app-container">
-      <div className="currency-converter">
-        <h1>Currency Converter</h1>
-        <div className="input-group">
-          <input 
-            type="number" 
-            value={amount} 
-            onChange={handleAmountChange} 
-            className="amount-input" 
-            min="0"
-          />
-          <select 
-            value={fromCurrency} 
-            onChange={handleFromCurrencyChange} 
-            className="currency-select"
-          >
-            {currencies.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency}
-              </option>
-            ))}
-          </select>
-          <span>to</span>
-          <select 
-            value={toCurrency} 
-            onChange={handleToCurrencyChange} 
-            className="currency-select"
-          >
-            {currencies.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency}
-              </option>
-            ))}
-          </select>
-        </div>
-        {convertedAmount !== null && (
-          <div className="result">
-            <h2>
-              {amount} {fromCurrency} = {convertedAmount.toFixed(2)} {toCurrency}
-            </h2>
-          </div>
-        )}
-      </div>
+    <div className="container">
+      <h1>Currency Converter</h1>
+      <input
+        type="number"
+        value={amount}
+        onChange={handleAmountChange}
+        placeholder="Amount"
+      />
+      <select
+        name="fromCurrency"
+        value={fromCurrency}
+        onChange={handleCurrencyChange}
+      >
+        {currencies.map(currency => (
+          <option key={currency.code} value={currency.code}>
+            {currency.name}
+          </option>
+        ))}
+      </select>
+      <select
+        name="toCurrency"
+        value={toCurrency}
+        onChange={handleCurrencyChange}
+      >
+        {currencies.map(currency => (
+          <option key={currency.code} value={currency.code}>
+            {currency.name}
+          </option>
+        ))}
+      </select>
+      <button onClick={handleConvert}>Convert</button>
+      {result && <div className="result">Converted Amount: {result} {toCurrency}</div>}
     </div>
   );
-}
+};
 
 export default App;
